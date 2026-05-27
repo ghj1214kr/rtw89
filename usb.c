@@ -16,8 +16,8 @@ MODULE_PARM_DESC(switch_usb_mode,
 
 static void rtw89_usb_read_port_complete(struct urb *urb);
 
-static void rtw89_usb_vendorreq(struct rtw89_dev *rtwdev, u32 addr,
-				void *data, u16 len, u8 reqtype)
+static void __rtw89_usb_vendorreq(struct rtw89_dev *rtwdev, u32 addr,
+				  void *data, u16 len, u8 reqtype, bool warn)
 {
 	struct rtw89_usb *rtwusb = rtw89_usb_priv(rtwdev);
 	struct usb_device *udev = rtwusb->udev;
@@ -57,7 +57,7 @@ static void rtw89_usb_vendorreq(struct rtw89_dev *rtwdev, u32 addr,
 
 		if (ret == -ESHUTDOWN || ret == -ENODEV)
 			set_bit(RTW89_FLAG_UNPLUGGED, rtwdev->flags);
-		else if (ret < 0)
+		else if (ret < 0 && warn)
 			rtw89_warn(rtwdev,
 				   "usb %s%u 0x%x fail ret=%d value=0x%x attempt=%d\n",
 				   str_read_write(reqtype == RTW89_USB_VENQT_READ),
@@ -72,6 +72,12 @@ static void rtw89_usb_vendorreq(struct rtw89_dev *rtwdev, u32 addr,
 			break;
 		}
 	}
+}
+
+static void rtw89_usb_vendorreq(struct rtw89_dev *rtwdev, u32 addr,
+				void *data, u16 len, u8 reqtype)
+{
+	__rtw89_usb_vendorreq(rtwdev, addr, data, len, reqtype, true);
 }
 
 static u32 rtw89_usb_read_cmac(struct rtw89_dev *rtwdev, u32 addr)
@@ -160,6 +166,14 @@ static void rtw89_usb_ops_write32(struct rtw89_dev *rtwdev, u32 addr, u32 val)
 	__le32 data = cpu_to_le32(val);
 
 	rtw89_usb_vendorreq(rtwdev, addr, &data, 4, RTW89_USB_VENQT_WRITE);
+}
+
+static void rtw89_usb_write32_quiet(struct rtw89_dev *rtwdev, u32 addr, u32 val)
+{
+	__le32 data = cpu_to_le32(val);
+
+	__rtw89_usb_vendorreq(rtwdev, addr, &data, 4,
+			      RTW89_USB_VENQT_WRITE, false);
 }
 
 static u32
@@ -1102,7 +1116,7 @@ static int rtw89_usb_switch_mode_ax(struct rtw89_dev *rtwdev)
 	if (rtwdev->chip->chip_id == RTL8851B)
 		return 0;
 
-	pad_ctrl2 = rtw89_read32(rtwdev, R_AX_PAD_CTRL2);
+	pad_ctrl2 = rtw89_usb_ops_read32(rtwdev, R_AX_PAD_CTRL2);
 
 	rtw89_debug(rtwdev, RTW89_DBG_HCI, "%s: pad_ctrl2: %#x\n",
 		    __func__, pad_ctrl2);
@@ -1121,7 +1135,7 @@ static int rtw89_usb_switch_mode_ax(struct rtw89_dev *rtwdev)
 
 	pad_ctrl2 |= B_AX_NO_PDN_CHIPOFF_V1 | B_AX_RSM_EN_V1;
 
-	rtw89_write32(rtwdev, R_AX_PAD_CTRL2, pad_ctrl2);
+	rtw89_usb_write32_quiet(rtwdev, R_AX_PAD_CTRL2, pad_ctrl2);
 
 	return 1;
 }
@@ -1130,7 +1144,7 @@ static int rtw89_usb_switch_mode_be(struct rtw89_dev *rtwdev)
 {
 	u32 pad_ctrl2;
 
-	pad_ctrl2 = rtw89_read32(rtwdev, R_BE_PAD_CTRL2);
+	pad_ctrl2 = rtw89_usb_ops_read32(rtwdev, R_BE_PAD_CTRL2);
 
 	rtw89_debug(rtwdev, RTW89_DBG_HCI, "%s: pad_ctrl2: %#x\n",
 		    __func__, pad_ctrl2);
@@ -1150,7 +1164,7 @@ static int rtw89_usb_switch_mode_be(struct rtw89_dev *rtwdev)
 		       B_BE_FORCE_CLK_U2 | B_BE_USB3_GEN_MODE |
 		       B_BE_USB3_LANE_MODE);
 
-	rtw89_write32(rtwdev, R_BE_PAD_CTRL2, pad_ctrl2);
+	rtw89_usb_write32_quiet(rtwdev, R_BE_PAD_CTRL2, pad_ctrl2);
 
 	return 1;
 }
@@ -1162,8 +1176,11 @@ static int rtw89_usb_switch_mode(struct rtw89_dev *rtwdev)
 	if (!rtw89_switch_usb_mode)
 		return 0;
 
-	if (rtwusb->udev->speed == USB_SPEED_SUPER)
+	if (rtwusb->udev->speed == USB_SPEED_SUPER) {
+		rtw89_info(rtwdev,
+			   "2.4 GHz performance may be better in a USB 2 port\n");
 		return 0;
+	}
 
 	if (rtwdev->chip->chip_gen == RTW89_CHIP_AX)
 		return rtw89_usb_switch_mode_ax(rtwdev);
