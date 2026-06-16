@@ -150,6 +150,8 @@ void rtw89_chan_create(struct rtw89_chan *chan, u8 center_chan, u8 primary_chan,
 						      primary_freq);
 	chan->pri_sb_idx = rtw89_get_primary_sb_idx(center_chan, primary_chan,
 						    bandwidth);
+	chan->rfsi_band = band == RTW89_BAND_2G ? RFSI_CTRL_BAND_2GHZ :
+						  RFSI_CTRL_BAND_5_6GHZ;
 }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 9, 0)
