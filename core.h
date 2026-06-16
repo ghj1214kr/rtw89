@@ -1587,6 +1587,10 @@ enum rtw89_tfc_lv {
 
 DECLARE_EWMA(tp, 10, 2);
 
+#define RTW89_TCP_TH 40
+#define RTW89_UDP_RATIO_TH 70
+#define RTW89_RECENT_ACTIVE_HIST GENMASK(4, 0)
+
 struct rtw89_traffic_stats {
 	/* units in bytes */
 	u64 tx_unicast;
@@ -1614,6 +1618,10 @@ struct rtw89_traffic_stats {
 
 	u16 tx_rate;
 	u16 rx_rate;
+
+	/* used by rtwvif only */
+	u64 tcp, udp, udp_ratio;
+	u8 active_histogram;
 };
 
 struct rtw89_btc_chdef {
@@ -6473,6 +6481,7 @@ struct rtw89_vif {
 
 	struct rtw89_roc roc;
 	bool offchan;
+	bool burst_active;
 
 	enum rtw89_mlo_mode mlo_mode;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 7, 0)
