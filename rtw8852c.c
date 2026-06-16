@@ -621,6 +621,7 @@ static void rtw8852c_efuse_parsing_gain_offset(struct rtw89_dev *rtwdev,
 	gain->offset_valid = valid;
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 9, 0)
 static void rtw8852c_efuse_copy_sn_uuid_usb(struct rtw89_dev *rtwdev,
 					    const struct rtw8852c_efuse *map)
 {
@@ -629,6 +630,7 @@ static void rtw8852c_efuse_copy_sn_uuid_usb(struct rtw89_dev *rtwdev,
 	memcpy(efuse->sn, map->u.sn, sizeof(efuse->sn));
 	memcpy(efuse->uuid, map->u.uuid, sizeof(efuse->uuid));
 }
+#endif
 
 static int rtw8852c_read_efuse(struct rtw89_dev *rtwdev, u8 *log_map,
 			       enum rtw89_efuse_block block)
@@ -649,7 +651,9 @@ static int rtw8852c_read_efuse(struct rtw89_dev *rtwdev, u8 *log_map,
 		break;
 	case RTW89_HCI_TYPE_USB:
 		ether_addr_copy(efuse->addr, map->u.mac_addr);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 9, 0)
 		rtw8852c_efuse_copy_sn_uuid_usb(rtwdev, map);
+#endif
 		break;
 	default:
 		return -ENOTSUPP;

@@ -1188,6 +1188,7 @@ static int rtw89_usb_switch_mode(struct rtw89_dev *rtwdev)
 	return rtw89_usb_switch_mode_be(rtwdev);
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 9, 0)
 static ssize_t serial_number_show(struct device *dev,
 				  struct device_attribute *attr, char *buf)
 {
@@ -1237,6 +1238,7 @@ static const struct attribute_group rtw89_usb_group = {
 	.is_visible	= SYSFS_GROUP_VISIBLE(rtw89_usb),
 };
 __ATTRIBUTE_GROUPS(rtw89_usb);
+#endif
 
 int rtw89_usb_probe(struct usb_interface *intf,
 		    const struct usb_device_id *id)
@@ -1259,7 +1261,9 @@ int rtw89_usb_probe(struct usb_interface *intf,
 	rtwusb->rtwdev = rtwdev;
 	rtwusb->info = info->bus.usb;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 9, 0)
 	rtwdev->hw->wiphy->dev.groups = rtw89_usb_groups;
+#endif
 
 	rtwdev->hci.ops = &rtw89_usb_ops;
 	rtwdev->hci.type = RTW89_HCI_TYPE_USB;

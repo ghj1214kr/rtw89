@@ -442,7 +442,11 @@ void rtw89_entity_get_conf(struct rtw89_dev *rtwdev, struct rtw89_entity_conf *c
 		struct ieee80211_vif *vif = rtwvif_to_vif(role);
 
 		conf->is_mld = ieee80211_vif_is_mld(vif);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 7, 0)
 		conf->en_emlsr = role->mlo_mode == RTW89_MLO_MODE_EMLSR;
+#else
+		conf->en_emlsr = false;
+#endif
 	}
 
 	for (i = 0; i < ARRAY_SIZE(idxes); i++)
