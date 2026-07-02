@@ -106,7 +106,8 @@ static inline u16 ieee80211_get_sn(struct ieee80211_hdr *hdr)
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 12, 0) && LINUX_VERSION_CODE >= KERNEL_VERSION(6, 9, 0)) || \
     (LINUX_VERSION_CODE < KERNEL_VERSION(6, 8, 0)  && LINUX_VERSION_CODE >= KERNEL_VERSION(6, 7, 0)) || \
-    (LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 70) && LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 0))
+    (LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 70) && LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 0)) || \
+	(defined(CONFIG_PREEMPT_RT) && LINUX_VERSION_CODE < KERNEL_VERSION(6, 9, 0))
 static inline void ieee80211_purge_tx_queue(struct ieee80211_hw *hw,
 					    struct sk_buff_head *skbs)
 {

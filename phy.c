@@ -841,7 +841,7 @@ void rtw89_phy_ra_recalc_agg_limit(struct rtw89_dev *rtwdev)
 #else
 	u16 agg_num = U16_MAX;
 
-	ieee80211_iterate_stations_mtx(rtwdev->hw,
+	ieee80211_iterate_stations_atomic(rtwdev->hw,
 				       rtw89_phy_ra_recalc_agg_limit_iter,
 				       &agg_num);
 #endif

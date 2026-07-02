@@ -3908,7 +3908,7 @@ static void rtw89_core_tid_rx_stats_reset_iter(void *data,
 
 void rtw89_core_tid_rx_stats_reset(struct rtw89_dev *rtwdev)
 {
-	ieee80211_iterate_stations_mtx(rtwdev->hw,
+	ieee80211_iterate_stations_atomic(rtwdev->hw,
 				       rtw89_core_tid_rx_stats_reset_iter,
 				       NULL);
 }
